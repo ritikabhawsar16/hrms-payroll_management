@@ -490,5 +490,25 @@ public class TimeSheetController {
 		HttpStatus status = HttpStatusMapper.mapToHttpStatus(responseDTO.getStatus());
 		return new ResponseEntity<>(responseDTO, status);
 	}
+	
+	@PostMapping("/handleCompOffLeaveSettlement")
+	 public ResponseEntity<String> handleCompOff(
+	            @RequestParam int empId,
+	            @RequestParam String compOffOption,
+	            @RequestParam String date,
+	            @RequestParam(required = false, defaultValue = "0") int amount) {
+		try {
+           // Call service method and get result
+           String result = timeSheetService.handleCompOffOptions(empId, compOffOption, date, amount);
+
+           if (result.equals("success")) {
+               return new ResponseEntity<>("CompOff option handled successfully.", HttpStatus.OK);
+           } else {
+               return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+           }
+       } catch (Exception e) {
+           return new ResponseEntity<>("Error handling CompOff option: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+       }
+   }
 
 }
