@@ -49,6 +49,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.adt.payroll.config.Auth;
+import com.adt.payroll.constant.AppConstants;
 import com.adt.payroll.dto.CheckStatusDTO;
 import com.adt.payroll.dto.CompOffDTO;
 import com.adt.payroll.dto.CurrentDateTime;
@@ -56,11 +57,12 @@ import com.adt.payroll.dto.EmployeeExpenseDTO;
 import com.adt.payroll.dto.ResponseDTO;
 import com.adt.payroll.dto.TimesheetDTO;
 import com.adt.payroll.event.OnCompOffDetailsSavedEvent;
-import com.adt.payroll.event.OnEmpCompOffApproveOrRejectEvent;
 import com.adt.payroll.event.OnPriorTimeDetailsSavedEvent;
 import com.adt.payroll.exception.NoDataFoundException;
 import com.adt.payroll.model.CompOff;
 import com.adt.payroll.model.EmployeeExpense;
+import com.adt.payroll.model.ExpenseItems;
+import com.adt.payroll.model.LeaveBalance;
 import com.adt.payroll.model.Priortime;
 import com.adt.payroll.model.TimeSheetModel;
 import com.adt.payroll.model.User;
@@ -68,12 +70,11 @@ import com.adt.payroll.model.payload.PriorTimeManagementRequest;
 import com.adt.payroll.msg.ResponseModel;
 import com.adt.payroll.repository.CompOffRepository;
 import com.adt.payroll.repository.EmployeeExpenseRepo;
+import com.adt.payroll.repository.ExpenseManagementRepo;
+import com.adt.payroll.repository.LeaveBalanceRepository;
 import com.adt.payroll.repository.PriorTimeRepository;
 import com.adt.payroll.repository.TimeSheetRepo;
 import com.adt.payroll.repository.UserRepo;
-
-import freemarker.template.TemplateException;
-import jakarta.mail.MessagingException;
 
 @Service
 public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService {
@@ -100,6 +101,12 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 
 	@Autowired
 	CompOffRepository compOffRepository;
+	
+	@Autowired
+	private LeaveBalanceRepository leaveBalanceRepository;
+	
+	@Autowired
+	ExpenseManagementRepo expenseManagementRepo;
 
 	private static final List<String> Status = Arrays.asList("Rejected", "Resend", "Approved", "Accepted", "Pending");
 
@@ -1257,5 +1264,78 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 			return buildResponse("Failed", "Internal server error occurred", null);
 		}
 	}
+	
+	@Override
+	 public String handleCompOffOptions(int empId, String compOffOption, String date, int amount) {
+	        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+	        try {
+	            Date formattedDate = formatter.parse(date);
+	            CompOff compOff = compOffRepository.findCompOffByEmployeeIdAndDate(empId, formattedDate);
+	            if(compOff.getStatus().equals(AppConstants.APPROVED)) {
+
+	            if (compOffOption.equals(AppConstants.LEAVEINCREMENT)) {
+	                handleLeaveIncrement(empId, compOff);
+
+	            } else if (compOffOption.equals(AppConstants.BONUS)) {
+	                handleBonus(empId, compOff, amount, formattedDate);
+
+	            } else if (compOffOption.equals(AppConstants.GOODWILL)) {
+	                handleGoodWill(compOff);
+	            }
+	            }else {
+	            	return "compOff status is not Approved";
+	            }
+	        } catch (ParseException e) {
+	            e.printStackTrace();
+	        }
+			return "success";
+	    }
+
+	    private void handleLeaveIncrement(int empId, CompOff compOff) {
+	        Optional<LeaveBalance> leaveBalance = leaveBalanceRepository.findByEmpId(empId);
+
+	        if (leaveBalance != null) {
+	            int newLeaveBalance = leaveBalance.get().getLeaveBalance() + 1;
+	            leaveBalanceRepository.updateLeaveBalByEmpId(empId, newLeaveBalance);
+
+	            if (compOff != null) {
+	            	
+	                compOff.setStatus(AppConstants.COMPOFF);
+	                compOffRepository.save(compOff);
+	            }
+	        }
+	    }
+
+	    private void handleBonus(int empId, CompOff compOff, int amount, Date formattedDate) {
+	        Optional<ExpenseItems> expenseItemsOpt = expenseManagementRepo.findById(empId);
+
+	        ExpenseItems expenseItems = expenseItemsOpt.orElseGet(ExpenseItems::new);
+	        expenseItems.setEmployee_id(empId);
+	        expenseItems.setAmount(amount);
+	        expenseItems.setCategory(AppConstants.COMPOFF);
+	        expenseItems.setComments("CompOff bonus Settlement");
+	        expenseItems.setDescription(formattedDate.toString());
+	        expenseItems.setGst(false);
+	        expenseItems.setPaidBy("Alphadot");
+	        expenseItems.setPaymentDate(LocalDate.now());
+	        expenseItems.setPaymentMode("Online");
+	        expenseItems.setStatus(AppConstants.APPROVED);
+	        expenseManagementRepo.save(expenseItems);
+
+	        if (compOff != null) {
+	            compOff.setStatus("bonus Settlement");
+	            compOffRepository.save(compOff);
+	        }
+	    }
+
+	    private void handleGoodWill(CompOff compOff) {
+	        if (compOff != null) {
+	            compOff.setStatus(AppConstants.GOODWILL);
+	            compOffRepository.save(compOff);
+	        }
+	    }
+
+	
 
 }

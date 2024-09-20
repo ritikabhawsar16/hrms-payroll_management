@@ -86,5 +86,8 @@ public interface TimeSheetService {
 //			throws TemplateException, MessagingException, IOException, ParseException;
 
 	public ResponseDTO getAllApprovedCompOffData();
+	
+	public String handleCompOffOptions(int empId, String compOffOption, String date, int amount);
+
 
 }
