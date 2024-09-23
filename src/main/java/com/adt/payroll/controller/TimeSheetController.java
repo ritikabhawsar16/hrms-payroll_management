@@ -426,61 +426,55 @@ public class TimeSheetController {
 		}
 	}
 
-// running code(gateway+postman) but URL not build on click button(mail), so will check after completing other task----
-////	@PreAuthorize("@auth.allow('EMPLOYEE_COMPOFF_APPROVED_OR_REJECTED')")
-//	@GetMapping("/empCompOffApprovedOrRejected/{empId}/{compOffDate}/{compOffStatus}")
-//	public ResponseEntity<String> empCompOffApprovedOrRejected(@PathVariable(value = "empId") Integer empId,
-//			@PathVariable(value = "compOffDate") String compOffDate,
-//			@PathVariable(value = "compOffStatus") String compOffStatus, HttpServletRequest request)
-//			throws TemplateException, MessagingException, IOException, ParseException {
-//		try {
-//			LOGGER.info("API Call From IP: " + request.getRemoteHost());
-////			Date compOffDateConverted = new SimpleDateFormat("yyyy-MM-dd").parse(compOffDate);
-////			CompOff compOffExist = compOffRepo.findCompOffByEmployeeIdAndDate(empId, compOffDateConverted);
-//
-//			Optional<User> user = Optional.ofNullable(userRepo.findByEmployeeId(empId)
-//					.orElseThrow(() -> new NoDataFoundException("Employee not found with EmpId:" + empId)));
-//
-//			String name = user.get().getFirstName() + " " + user.get().getLastName();
-//
-//			Date compOffDateConverted = new SimpleDateFormat("yyyy-MM-dd").parse(compOffDate);
-//			Optional<CompOff> compOffExist = Optional.ofNullable(compOffRepo
-//					.findByEmpIdAndCompOffDate(empId, compOffDateConverted).orElseThrow(() -> new NoDataFoundException(
-//							"CompOff data not found for empName:" + name + " of compOffDate:" + compOffDate)));
-//
-//			freemarkerConfig.setClassForTemplateLoading(getClass(), basePackagePath);
-//			Template template = freemarkerConfig.getTemplate("comp_off_message.ftl");
-//			Map<String, Object> model = new HashMap<>();
-//			String status = compOffExist.get().getStatus();
-//
-//			if (status.equalsIgnoreCase("Pending") && compOffStatus.equalsIgnoreCase("Rejected")) {
-//				LOGGER.info("Payroll service: empCompOffApprovedOrRejected Info level log msg");
-//				timeSheetService.empCompOffApprovedOrRejected(empId, compOffDate, compOffStatus);
-//				model.put("Message", "Comp-Off request has been " + compOffStatus + " !!");
-////				model.put("Email", "");
-//				return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
-//						HttpStatus.OK);
-//			}
-//			if (status.equalsIgnoreCase("Pending") && compOffStatus.equalsIgnoreCase("Approved")) {
-//				LOGGER.info("Payroll service: empCompOffApprovedOrRejected Info level log msg");
-//				timeSheetService.empCompOffApprovedOrRejected(empId, compOffDate, compOffStatus);
-//				model.put("Message", "Comp-Off request has been " + compOffStatus + "!!");
-////				model.put("Email", "");
-//				return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
-//						HttpStatus.OK);
-//			}
-//			model.put("Message", "Comp-Off request has been already " + status + " !!");
-////			model.put("Email", status);
-//			return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
-//					HttpStatus.OK);
-//		} catch (NoDataFoundException e) {
-//			LOGGER.error("Error occurred: ", e);
-//			return new ResponseEntity<>(e.getMessage(), HttpStatus.OK);
-//		} catch (Exception e) {
-//			LOGGER.error("Error occurred: ", e);
-//			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//		}
-//	}
+	@PreAuthorize("@auth.allow('EMPLOYEE_COMPOFF_APPROVED_OR_REJECTED')")
+	@GetMapping("/empCompOffApprovedOrRejected/{empId}/{compOffDate}/{compOffStatus}")
+	public ResponseEntity<String> empCompOffApprovedOrRejected(@PathVariable(value = "empId") Integer empId,
+			@PathVariable(value = "compOffDate") String compOffDate,
+			@PathVariable(value = "compOffStatus") String compOffStatus, HttpServletRequest request)
+			throws TemplateException, MessagingException, IOException, ParseException {
+		try {
+			LOGGER.info("API Call From IP: " + request.getRemoteHost());
+
+			Optional<User> user = Optional.ofNullable(userRepo.findByEmployeeId(empId)
+					.orElseThrow(() -> new NoDataFoundException("Employee not found with EmpId:" + empId)));
+
+			String name = user.get().getFirstName() + " " + user.get().getLastName();
+
+			Date compOffDateConverted = new SimpleDateFormat("yyyy-MM-dd").parse(compOffDate);
+			Optional<CompOff> compOffExist = Optional.ofNullable(compOffRepo
+					.findByEmpIdAndCompOffDate(empId, compOffDateConverted).orElseThrow(() -> new NoDataFoundException(
+							"CompOff data not found for empName:" + name + " of compOffDate:" + compOffDate)));
+
+			freemarkerConfig.setClassForTemplateLoading(getClass(), basePackagePath);
+			Template template = freemarkerConfig.getTemplate("comp_off_message.ftl");
+			Map<String, Object> model = new HashMap<>();
+			String status = compOffExist.get().getStatus();
+
+			if (status.equalsIgnoreCase("Pending") && compOffStatus.equalsIgnoreCase("Rejected")) {
+				LOGGER.info("Payroll service: empCompOffApprovedOrRejected Info level log msg");
+				timeSheetService.empCompOffApprovedOrRejected(empId, compOffDate, compOffStatus);
+				model.put("Message", "Comp-Off request of employee:" + name + " has been " + compOffStatus + " !!");
+				return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
+						HttpStatus.OK);
+			}
+			if (status.equalsIgnoreCase("Pending") && compOffStatus.equalsIgnoreCase("Approved")) {
+				LOGGER.info("Payroll service: empCompOffApprovedOrRejected Info level log msg");
+				timeSheetService.empCompOffApprovedOrRejected(empId, compOffDate, compOffStatus);
+				model.put("Message", "Comp-Off request of employee:" + name + " has been " + compOffStatus + " !!");
+				return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
+						HttpStatus.OK);
+			}
+			model.put("Message", "Comp-Off request of employee:" + name + " has been already " + status + " !!");
+			return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model),
+					HttpStatus.OK);
+		} catch (NoDataFoundException e) {
+			LOGGER.error("Error occurred: ", e);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.OK);
+		} catch (Exception e) {
+			LOGGER.error("Error occurred: ", e);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 	@PreAuthorize("@auth.allow('GET_ALL_APPROVED_COMP_OFF_DATA')")
 	@GetMapping("/getAllApprovedCompOffData")
@@ -490,25 +484,23 @@ public class TimeSheetController {
 		HttpStatus status = HttpStatusMapper.mapToHttpStatus(responseDTO.getStatus());
 		return new ResponseEntity<>(responseDTO, status);
 	}
-	
-	@PostMapping("/handleCompOffLeaveSettlement")
-	 public ResponseEntity<String> handleCompOff(
-	            @RequestParam int empId,
-	            @RequestParam String compOffOption,
-	            @RequestParam String date,
-	            @RequestParam(required = false, defaultValue = "0") int amount) {
-		try {
-           // Call service method and get result
-           String result = timeSheetService.handleCompOffOptions(empId, compOffOption, date, amount);
 
-           if (result.equals("success")) {
-               return new ResponseEntity<>("CompOff option handled successfully.", HttpStatus.OK);
-           } else {
-               return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-           }
-       } catch (Exception e) {
-           return new ResponseEntity<>("Error handling CompOff option: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-       }
-   }
+	@PostMapping("/handleCompOffLeaveSettlement")
+	public ResponseEntity<String> handleCompOff(@RequestParam int empId, @RequestParam String compOffOption,
+			@RequestParam String date, @RequestParam(required = false, defaultValue = "0") int amount) {
+		try {
+			// Call service method and get result
+			String result = timeSheetService.handleCompOffOptions(empId, compOffOption, date, amount);
+
+			if (result.equals("success")) {
+				return new ResponseEntity<>("CompOff option handled successfully.", HttpStatus.OK);
+			} else {
+				return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<>("Error handling CompOff option: " + e.getMessage(),
+					HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 }

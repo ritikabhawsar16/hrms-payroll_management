@@ -686,7 +686,6 @@ public class CommonEmailServiceImpl implements CommonEmailService {
 		for (Map<String, Object> priortime : priortimeData) {
 			String email = String.valueOf(priortime.get("email_id"));
 			String token = auth.tokenGanreate(email);
-			// mail.setTo("sunalisingh.adt@gmail.com");
 			mail.setTo(email);
 			mail.getModel().put("compOffApprovalLink",
 					onCompOffDetailsSavedEvent.getRedirectUrl1().toUriString() + "?Authorization=" + token);
@@ -694,8 +693,6 @@ public class CommonEmailServiceImpl implements CommonEmailService {
 					onCompOffDetailsSavedEvent.getRedirectUrl2().toUriString() + "?Authorization=" + token);
 			mail.getModel().put("CheckInTime", onCompOffDetailsSavedEvent.getCompOff().getCheckin().toString());
 			mail.getModel().put("CheckOutTime", onCompOffDetailsSavedEvent.getCompOff().getCheckout().toString());
-			// mail.getModel().put("workingHours",
-			// onUserRegistrationCompleteEvent.getCompOff().getw);
 			mail.getModel().put("EmpId", String.valueOf(onCompOffDetailsSavedEvent.getCompOff().getEmpId()));
 
 			mail.getModel().put("Name", user.get().getFirstName().concat(user.get().getLastName()));
@@ -739,19 +736,9 @@ public class CommonEmailServiceImpl implements CommonEmailService {
 			String subject = "Comp-Off Request " + event.getActionStatus();
 			String message = "Your comp-off request has been " + event.getActionStatus()
 					+ ". Below are the comp-off request details.";
-//			String token = auth.tokenGanreate(email);
 			Mail mail = new Mail();
 			mail.setSubject(subject);
 			mail.setTo(userEmail);
-
-			// *** Get recipient email and generate token ***
-//			String sql = "SELECT email_id FROM av_schema.priortime_email where designation='CEO'";
-//			List<Map<String, Object>> compOffData = dataExtractor.extractDataFromTable(sql);
-//			String token = null;
-//			for (Map<String, Object> data : compOffData) {
-//				String email = String.valueOf(data.get("email_id"));
-//				token = auth.tokenGanreate(email);
-//			}
 
 			Map<String, Object> model = new HashMap<>();
 			model.put("Message", message);

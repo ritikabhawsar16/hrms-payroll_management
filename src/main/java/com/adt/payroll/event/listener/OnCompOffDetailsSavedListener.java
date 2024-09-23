@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 package com.adt.payroll.event.listener;
+
 import java.io.IOException;
 
 import org.springframework.context.ApplicationListener;
@@ -26,24 +27,23 @@ import jakarta.mail.MessagingException;
 @Component
 public class OnCompOffDetailsSavedListener implements ApplicationListener<OnCompOffDetailsSavedEvent> {
 
-   
 //    private final MailService mailService;
-    
-    private CommonEmailService emailService;
 
-    public OnCompOffDetailsSavedListener(CommonEmailService emailService) {
-        this.emailService = emailService;
-    }
+	private CommonEmailService emailService;
 
-    /**
-     * As soon as a registration event is complete, invoke the email verification
-     * asynchronously in an another thread pool
-     */
-    @Override
-    @Async
-    public void onApplicationEvent(OnCompOffDetailsSavedEvent onCompOffDetailsSavedEvent) {
+	public OnCompOffDetailsSavedListener(CommonEmailService emailService) {
+		this.emailService = emailService;
+	}
+
+	/**
+	 * As soon as a registration event is complete, invoke the email verification
+	 * asynchronously in an another thread pool
+	 */
+	@Override
+	@Async
+	public void onApplicationEvent(OnCompOffDetailsSavedEvent onCompOffDetailsSavedEvent) {
 //        sendEmailVerification(onUserRegistrationCompleteEvent);
-        try {
+		try {
 			emailService.sendEmailVerification(onCompOffDetailsSavedEvent);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -52,11 +52,11 @@ public class OnCompOffDetailsSavedListener implements ApplicationListener<OnComp
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-    }
+	}
 
-    /**
-     * Send email verification to the user and persist the token in the database.
-     */
+	/**
+	 * Send email verification to the user and persist the token in the database.
+	 */
 //    private void sendEmailVerification(OnPriorTimeDetailsSavedEvent event) {
 //        Priortime priortime = event.getPriorTime();
 //        String recipientAddress = priortime.getEmail();

@@ -27,8 +27,6 @@ public class OnEmpCompOffApprovedOrRejectedEventListener
 	public void onApplicationEvent(OnEmpCompOffApproveOrRejectEvent event) {
 		try {
 			CompOff compOff = event.getCompOff();
-//			CompOff compOff=event.getActionStatus();
-//			if (compOff.getStatus().equalsIgnoreCase("Approved") || compOff.getStatus().equalsIgnoreCase("Rejected")) 
 			if (event.getActionStatus() != null && event.getActionStatus() != null) {
 				LOGGER.info("Handling comp-off {} event for employee ID: {}", event.getActionStatus(),
 						compOff.getEmpId());

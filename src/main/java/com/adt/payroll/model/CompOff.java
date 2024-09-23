@@ -20,39 +20,33 @@ import lombok.Data;
 @Data
 public class CompOff {
 	@Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", columnDefinition = "serial")
-    private Integer id;
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "id", columnDefinition = "serial")
+	private Integer id;
 
-//    @ManyToOne
-//	@JoinColumn(name = "emp_id", referencedColumnName = "EMPLOYEE_ID", nullable = true, insertable = false, updatable = false)
-//	private User employee;
-	
-//	@Column(name = "emp_id")
-//    private int empId;
 	@ManyToOne
 	@JoinColumn(name = "empId", referencedColumnName = "EMPLOYEE_ID", nullable = false, insertable = false, updatable = false)
 	private User employee;
 	private int empId;
-	
-    @Column(name = "checkout")
-    private Time checkout;
 
-    @Column(name = "checkin")
-    private Time checkin;
+	@Column(name = "checkout")
+	private Time checkout;
 
-    @Column(name = "date")
-    private Date date;
+	@Column(name = "checkin")
+	private Time checkin;
 
-    @Column(name = "status")
-    private String status;
+	@Column(name = "date")
+	private Date date;
 
-    @Column(name = "expiry_time")
-    private Timestamp expiryTime;
+	@Column(name = "status")
+	private String status;
 
-    public CompOff() {
-        super();
-    }
+	@Column(name = "expiry_time")
+	private Timestamp expiryTime;
+
+	public CompOff() {
+		super();
+	}
 
 	public CompOff(Integer id, User employee, int empId, Time checkout, Time checkin, Date date, String status,
 			Timestamp expiryTime) {
@@ -73,9 +67,4 @@ public class CompOff {
 				+ ", checkin=" + checkin + ", date=" + date + ", status=" + status + ", expiryTime=" + expiryTime + "]";
 	}
 
-	
-
-	
-	
-   
 }
