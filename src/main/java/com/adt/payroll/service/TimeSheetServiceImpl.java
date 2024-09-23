@@ -57,6 +57,7 @@ import com.adt.payroll.dto.EmployeeExpenseDTO;
 import com.adt.payroll.dto.ResponseDTO;
 import com.adt.payroll.dto.TimesheetDTO;
 import com.adt.payroll.event.OnCompOffDetailsSavedEvent;
+import com.adt.payroll.event.OnEmpCompOffApproveOrRejectEvent;
 import com.adt.payroll.event.OnPriorTimeDetailsSavedEvent;
 import com.adt.payroll.exception.NoDataFoundException;
 import com.adt.payroll.model.CompOff;
@@ -75,6 +76,9 @@ import com.adt.payroll.repository.LeaveBalanceRepository;
 import com.adt.payroll.repository.PriorTimeRepository;
 import com.adt.payroll.repository.TimeSheetRepo;
 import com.adt.payroll.repository.UserRepo;
+
+import freemarker.template.TemplateException;
+import jakarta.mail.MessagingException;
 
 @Service
 public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService {
@@ -101,10 +105,10 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 
 	@Autowired
 	CompOffRepository compOffRepository;
-	
+
 	@Autowired
 	private LeaveBalanceRepository leaveBalanceRepository;
-	
+
 	@Autowired
 	ExpenseManagementRepo expenseManagementRepo;
 
@@ -376,10 +380,8 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 					}
 				}
 			}
-
 			return "You have checked out with latitude: " + latitude + " and longitude: " + longitude;
 		}
-
 		return "You are not checked in.";
 	}
 
@@ -992,7 +994,8 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 			long differenceInHours = (differenceInMilliSeconds / (60 * 60 * 1000)) % 24;
 			long differenceInMinutes = (differenceInMilliSeconds / (60 * 1000)) % 60;
 			long differenceInSeconds = (differenceInMilliSeconds / 1000) % 60;
-			timeSheetModel.setWorkingHour(differenceInHours + ":" + differenceInMinutes + ":" + differenceInSeconds);
+			timeSheetModel.setTotalWorkingHours(
+					Time.valueOf(differenceInHours + ":" + differenceInMinutes + ":" + differenceInSeconds));
 			if (timeSheetModel.getLeaveInterval() != null && !timeSheetModel.getLeaveInterval().isEmpty()) {
 				if (!timeSheetModel.getIntervalStatus()) {
 					return "Please Resume Your Break";
@@ -1012,7 +1015,7 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 				long minutes = TimeUnit.MILLISECONDS.toMinutes(workingMilisecond) % 60;
 				long seconds = TimeUnit.MILLISECONDS.toSeconds(workingMilisecond) % 60;
 				String formattedTime = String.format("%02d:%02d:%02d", hours, minutes, seconds);
-				timeSheetModel.setWorkingHour(formattedTime);
+				timeSheetModel.setTotalWorkingHours(Time.valueOf(formattedTime));
 			}
 			timeSheetModel.setStatus("Present");
 			timeSheetModel.setIntervalStatus(false);
@@ -1154,61 +1157,60 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 		}
 	}
 
-// running code(gateway+postman) but URL not build on click button(mail), so will check after completing other task----
-//	@Override
-//	public String empCompOffApprovedOrRejected(Integer empId, String compOffDate, String compOffStatus)
-//			throws TemplateException, MessagingException, IOException, ParseException {
-//		try {
-//			LOGGER.info("TimeSheetServiceImpl: empCompOffApprovedOrRejected started for employee ID: {}", empId);
-//
-//			Optional<User> empExist = userRepo.findByEmployeeId(empId);
-//			if (!empExist.isPresent()) {
-//				return "Employee not found";
-//			}
-//
-//			Date compOffDateConverted = new SimpleDateFormat("yyyy-MM-dd").parse(compOffDate);
-//			Optional<CompOff> compOffExist = compOffRepository.findByEmpIdAndCompOffDate(empId, compOffDateConverted);
-//			if (!compOffExist.isPresent()) {
-//				return "Comp-off data not found";
-//			}
-//
-//			String timeSheetDate = new SimpleDateFormat("dd-MM-yyyy").format(compOffDateConverted);
-//			Optional<TimeSheetModel> timeSheetExist = timeSheetRepo.findTimeSheetDataByEmpIdAndDate(empId,
-//					timeSheetDate);
-//			if (!timeSheetExist.isPresent()) {
-//				return "TimeSheetModel data not found";
-//			}
-//
-//			CompOff compOff = compOffExist.get();
-//			String newStatus = compOffStatus;
-//			if (!newStatus.equalsIgnoreCase("Approved") && !newStatus.equalsIgnoreCase("Rejected")) {
-//				return "Invalid comp-off status";
-//			}
-//
-//			if (!compOff.getStatus().equalsIgnoreCase("Pending")) {
-//				return "Comp-off request is already " + compOff.getStatus();
-//			}
-//
-//			compOff.setStatus(newStatus);
-//			CompOff compOffSaved = compOffRepository.save(compOff);
-//
-//			if (compOffSaved != null || !compOffSaved.equals("")) {
-//				timeSheetExist.get().setStatus("CompOff " + newStatus);
-//				timeSheetRepo.save(timeSheetExist.get());
-//			}
-//
-//			OnEmpCompOffApproveOrRejectEvent event = new OnEmpCompOffApproveOrRejectEvent(compOff, compOffStatus,
-//					newStatus);
-//			applicationEventPublisher.publishEvent(event);
-//
-//			LOGGER.info("Comp-off status updated to {} for employee ID:{}", newStatus, empId);
-//
-//			return "Comp-off status is " + newStatus;
-//		} catch (Exception e) {
-//			LOGGER.error("empCompOffApprovedOrRejected : Error while updating comp-off status: {}", e.getMessage());
-//			return "Error while updating comp-off status";
-//		}
-//	}
+	@Override
+	public String empCompOffApprovedOrRejected(Integer empId, String compOffDate, String compOffStatus)
+			throws TemplateException, MessagingException, IOException, ParseException {
+		try {
+			LOGGER.info("TimeSheetServiceImpl: empCompOffApprovedOrRejected started for employee ID: {}", empId);
+
+			Optional<User> empExist = userRepo.findByEmployeeId(empId);
+			if (!empExist.isPresent()) {
+				return "Employee not found";
+			}
+
+			Date compOffDateConverted = new SimpleDateFormat("yyyy-MM-dd").parse(compOffDate);
+			Optional<CompOff> compOffExist = compOffRepository.findByEmpIdAndCompOffDate(empId, compOffDateConverted);
+			if (!compOffExist.isPresent()) {
+				return "Comp-off data not found";
+			}
+
+			String timeSheetDate = new SimpleDateFormat("dd-MM-yyyy").format(compOffDateConverted);
+			Optional<TimeSheetModel> timeSheetExist = timeSheetRepo.findTimeSheetDataByEmpIdAndDate(empId,
+					timeSheetDate);
+			if (!timeSheetExist.isPresent()) {
+				return "TimeSheetModel data not found";
+			}
+
+			CompOff compOff = compOffExist.get();
+			String newStatus = compOffStatus;
+			if (!newStatus.equalsIgnoreCase("Approved") && !newStatus.equalsIgnoreCase("Rejected")) {
+				return "Invalid comp-off status";
+			}
+
+			if (!compOff.getStatus().equalsIgnoreCase("Pending")) {
+				return "Comp-off request is already " + compOff.getStatus();
+			}
+
+			compOff.setStatus(newStatus);
+			CompOff compOffSaved = compOffRepository.save(compOff);
+
+			if (compOffSaved != null || !compOffSaved.equals("")) {
+				timeSheetExist.get().setStatus("CompOff " + newStatus);
+				timeSheetRepo.save(timeSheetExist.get());
+			}
+
+			OnEmpCompOffApproveOrRejectEvent event = new OnEmpCompOffApproveOrRejectEvent(compOff, compOffStatus,
+					newStatus);
+			applicationEventPublisher.publishEvent(event);
+
+			LOGGER.info("Comp-off status updated to {} for employee ID:{}", newStatus, empId);
+
+			return "Comp-off status is " + newStatus;
+		} catch (Exception e) {
+			LOGGER.error("empCompOffApprovedOrRejected : Error while updating comp-off status: {}", e.getMessage());
+			return "Error while updating comp-off status";
+		}
+	}
 
 	@Override
 	public ResponseDTO getAllApprovedCompOffData() {
@@ -1264,78 +1266,76 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 			return buildResponse("Failed", "Internal server error occurred", null);
 		}
 	}
-	
+
 	@Override
-	 public String handleCompOffOptions(int empId, String compOffOption, String date, int amount) {
-	        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+	public String handleCompOffOptions(int empId, String compOffOption, String date, int amount) {
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
-	        try {
-	            Date formattedDate = formatter.parse(date);
-	            CompOff compOff = compOffRepository.findCompOffByEmployeeIdAndDate(empId, formattedDate);
-	            if(compOff.getStatus().equals(AppConstants.APPROVED)) {
+		try {
+			Date formattedDate = formatter.parse(date);
+			CompOff compOff = compOffRepository.findCompOffByEmployeeIdAndDate(empId, formattedDate);
+			if (compOff.getStatus().equals(AppConstants.APPROVED)) {
 
-	            if (compOffOption.equals(AppConstants.LEAVEINCREMENT)) {
-	                handleLeaveIncrement(empId, compOff);
+				if (compOffOption.equals(AppConstants.LEAVEINCREMENT)) {
+					handleLeaveIncrement(empId, compOff);
 
-	            } else if (compOffOption.equals(AppConstants.BONUS)) {
-	                handleBonus(empId, compOff, amount, formattedDate);
+				} else if (compOffOption.equals(AppConstants.BONUS)) {
+					handleBonus(empId, compOff, amount, formattedDate);
 
-	            } else if (compOffOption.equals(AppConstants.GOODWILL)) {
-	                handleGoodWill(compOff);
-	            }
-	            }else {
-	            	return "compOff status is not Approved";
-	            }
-	        } catch (ParseException e) {
-	            e.printStackTrace();
-	        }
-			return "success";
-	    }
+				} else if (compOffOption.equals(AppConstants.GOODWILL)) {
+					handleGoodWill(compOff);
+				}
+			} else {
+				return "compOff status is not Approved";
+			}
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return "success";
+	}
 
-	    private void handleLeaveIncrement(int empId, CompOff compOff) {
-	        Optional<LeaveBalance> leaveBalance = leaveBalanceRepository.findByEmpId(empId);
+	private void handleLeaveIncrement(int empId, CompOff compOff) {
+		Optional<LeaveBalance> leaveBalance = leaveBalanceRepository.findByEmpId(empId);
 
-	        if (leaveBalance != null) {
-	            int newLeaveBalance = leaveBalance.get().getLeaveBalance() + 1;
-	            leaveBalanceRepository.updateLeaveBalByEmpId(empId, newLeaveBalance);
+		if (leaveBalance != null) {
+			int newLeaveBalance = leaveBalance.get().getLeaveBalance() + 1;
+			leaveBalanceRepository.updateLeaveBalByEmpId(empId, newLeaveBalance);
 
-	            if (compOff != null) {
-	            	
-	                compOff.setStatus(AppConstants.COMPOFF);
-	                compOffRepository.save(compOff);
-	            }
-	        }
-	    }
+			if (compOff != null) {
 
-	    private void handleBonus(int empId, CompOff compOff, int amount, Date formattedDate) {
-	        Optional<ExpenseItems> expenseItemsOpt = expenseManagementRepo.findById(empId);
+				compOff.setStatus(AppConstants.COMPOFF);
+				compOffRepository.save(compOff);
+			}
+		}
+	}
 
-	        ExpenseItems expenseItems = expenseItemsOpt.orElseGet(ExpenseItems::new);
-	        expenseItems.setEmployee_id(empId);
-	        expenseItems.setAmount(amount);
-	        expenseItems.setCategory(AppConstants.COMPOFF);
-	        expenseItems.setComments("CompOff bonus Settlement");
-	        expenseItems.setDescription(formattedDate.toString());
-	        expenseItems.setGst(false);
-	        expenseItems.setPaidBy("Alphadot");
-	        expenseItems.setPaymentDate(LocalDate.now());
-	        expenseItems.setPaymentMode("Online");
-	        expenseItems.setStatus(AppConstants.APPROVED);
-	        expenseManagementRepo.save(expenseItems);
+	private void handleBonus(int empId, CompOff compOff, int amount, Date formattedDate) {
+		Optional<ExpenseItems> expenseItemsOpt = expenseManagementRepo.findById(empId);
 
-	        if (compOff != null) {
-	            compOff.setStatus("bonus Settlement");
-	            compOffRepository.save(compOff);
-	        }
-	    }
+		ExpenseItems expenseItems = expenseItemsOpt.orElseGet(ExpenseItems::new);
+		expenseItems.setEmployee_id(empId);
+		expenseItems.setAmount(amount);
+		expenseItems.setCategory(AppConstants.COMPOFF);
+		expenseItems.setComments("CompOff bonus Settlement");
+		expenseItems.setDescription(formattedDate.toString());
+		expenseItems.setGst(false);
+		expenseItems.setPaidBy("Alphadot");
+		expenseItems.setPaymentDate(LocalDate.now());
+		expenseItems.setPaymentMode("Online");
+		expenseItems.setStatus(AppConstants.APPROVED);
+		expenseManagementRepo.save(expenseItems);
 
-	    private void handleGoodWill(CompOff compOff) {
-	        if (compOff != null) {
-	            compOff.setStatus(AppConstants.GOODWILL);
-	            compOffRepository.save(compOff);
-	        }
-	    }
+		if (compOff != null) {
+			compOff.setStatus("bonus Settlement");
+			compOffRepository.save(compOff);
+		}
+	}
 
-	
+	private void handleGoodWill(CompOff compOff) {
+		if (compOff != null) {
+			compOff.setStatus(AppConstants.GOODWILL);
+			compOffRepository.save(compOff);
+		}
+	}
 
 }

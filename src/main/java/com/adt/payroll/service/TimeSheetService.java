@@ -81,13 +81,11 @@ public interface TimeSheetService {
 
 	Page<Map.Entry<Integer, List<Priortime>>> getAllEmployeePriorTimeRequest(int page, int size);
 
-// running code(gateway+postman) but URL not build on click button(mail), so will check after completing other task----
-//	public String empCompOffApprovedOrRejected(Integer empId, String compOffDate, String compOffStatus)
-//			throws TemplateException, MessagingException, IOException, ParseException;
+	public String empCompOffApprovedOrRejected(Integer empId, String compOffDate, String compOffStatus)
+			throws TemplateException, MessagingException, IOException, ParseException;
 
 	public ResponseDTO getAllApprovedCompOffData();
-	
-	public String handleCompOffOptions(int empId, String compOffOption, String date, int amount);
 
+	public String handleCompOffOptions(int empId, String compOffOption, String date, int amount);
 
 }

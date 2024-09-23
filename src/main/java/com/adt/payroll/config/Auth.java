@@ -32,15 +32,15 @@ public class Auth {
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 	@Autowired
 	private HttpServletRequest request;
-	
+
 	@Autowired
 	private TableDataExtractor dataExtractor;
-	
+
 	@Value("${app.jwt.secret}")
 	public String screteKey;
-	
+
 	public static String empId;
-	
+
 	public static String apiConstant;
 
 	public boolean isUpdated;
@@ -48,12 +48,12 @@ public class Auth {
 	public static String roles;
 
 	public boolean allow(String apiName, Map<String, String> resourceAttributes) {
-		apiConstant=apiName;
+		apiConstant = apiName;
 		String token = getToken(request);
 		Claims claims = getUserIdFromJWT(token);
-		List<GrantedAuthority> authorities = getAuthorities(claims);	
+		List<GrantedAuthority> authorities = getAuthorities(claims);
 		boolean isValidAuthority = false;
-		String authority=null;
+		String authority = null;
 		String sql = "SELECT r.role_name FROM user_schema.role r JOIN av_schema.api_mapping  am ON r.role_id = am.role_id JOIN av_schema.api_details ad ON am.api_id = ad.api_id WHERE ad.api_name ="
 				+ "'" + apiName + "'";
 		List<Map<String, Object>> roleeData = dataExtractor.extractDataFromTable(sql);
@@ -69,22 +69,23 @@ public class Auth {
 	}
 
 	public boolean allow(String apiName) {
-		apiConstant=apiName;
+		apiConstant = apiName;
 		String token = getToken(request);
 		if (token.isEmpty() || token == null)
-			token = getTokenByUrl(request);		
+			token = getTokenByUrl(request);
 		Claims claims = getUserIdFromJWT(token);
 		List<GrantedAuthority> authorities = getAuthorities(claims);
 		boolean isValidAuthority = false;
-		String authority=null;
-		String sql = "SELECT r.role_name FROM user_schema.role r JOIN av_schema.api_mapping  am ON r.role_id = am.role_id JOIN av_schema.api_details ad ON am.api_id = ad.api_id WHERE ad.api_name ="+"'"+apiName+"'";
+		String authority = null;
+		String sql = "SELECT r.role_name FROM user_schema.role r JOIN av_schema.api_mapping  am ON r.role_id = am.role_id JOIN av_schema.api_details ad ON am.api_id = ad.api_id WHERE ad.api_name ="
+				+ "'" + apiName + "'";
 		List<Map<String, Object>> roleData = dataExtractor.extractDataFromTable(sql);
 		for (Map<String, Object> role : roleData) {
-	    	 authority = String.valueOf(role.get("role_name"));
-	    	 isValidAuthority = checkAuthority(authority, authorities);
-	    	 if (isValidAuthority) {
-					break;
-				}
+			authority = String.valueOf(role.get("role_name"));
+			isValidAuthority = checkAuthority(authority, authorities);
+			if (isValidAuthority) {
+				break;
+			}
 		}
 		return isValidAuthority;
 	}
@@ -111,10 +112,10 @@ public class Auth {
 
 	private List<GrantedAuthority> getAuthorities(Claims claims) {
 		String employeeId = String.valueOf(claims.get("id"));
-		roles=String.valueOf(claims.get("authorities"));
+		roles = String.valueOf(claims.get("authorities"));
 		empId = employeeId;
-		if(isUpdated)
-	    updateByEmail = String.valueOf(claims.get("sub"));
+		if (isUpdated)
+			updateByEmail = String.valueOf(claims.get("sub"));
 		List<GrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_CLAIM).toString().split(","))
 				.map(SimpleGrantedAuthority::new).collect(Collectors.toList());
 		return authorities;
@@ -135,13 +136,14 @@ public class Auth {
 		Jwt<Header, Claims> untrusted = Jwts.parser().parseClaimsJwt(withoutSignature);
 		return untrusted.getBody();
 	}
-	
+
 	private String getTokenByUrl(HttpServletRequest request) {
 		String token = request.getQueryString();
 		token = token.replace("Authorization=", "");
-		isUpdated=true;
+		isUpdated = true;
 		return token;
 	}
+
 	public String getEmail() {
 		String sql = "SELECT email FROM user_schema._employee WHERE employee_id=" + empId;
 		List<Map<String, Object>> empData = dataExtractor.extractDataFromTable(sql);
@@ -163,7 +165,6 @@ public class Auth {
 
 		return emailObj.toString();
 	}
-
 
 	public String tokenGanreate(String emailId) {
 		String sql = "SELECT r.role_name, e.employee_id FROM user_schema.role r JOIN user_schema.user_authority ua ON r.role_id = ua.role_id JOIN user_schema._employee e ON ua.employee_id = e.employee_id WHERE e.email ="
@@ -193,9 +194,9 @@ public class Auth {
 
 		return null;
 	}
-	
+
 	public static boolean getCompoffRole(String roleName) {
-		if(roles.contains(roleName)) {
+		if (roles.contains(roleName)) {
 			return true;
 		}
 		return false;
