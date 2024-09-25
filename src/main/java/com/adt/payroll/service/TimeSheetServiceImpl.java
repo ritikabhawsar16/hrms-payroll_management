@@ -589,7 +589,7 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 			timesheet.setCheckIn(priortime.get().getCheckIn());
 			timesheet.setCheckOut(priortime.get().getCheckOut());
 			timesheet.setStatus("Present");
-			timesheet.setWorkingHour(priortime.get().getWorkingHour());
+			timesheet.setTotalWorkingHours(Time.valueOf(priortime.get().getWorkingHour()));
 			timesheet.setCheckOutLatitude(priortime.get().getCheckOutLatitude());
 			timesheet.setCheckOutLongitude(priortime.get().getCheckOutLongitude());
 			timesheet.setCheckOutDistance(priortime.get().getCheckOutDistance());
@@ -602,7 +602,7 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 			timesheet.setEmployeeId(priortime.get().getEmployeeId());
 			timesheet.setMonth(priortime.get().getMonth());
 			timesheet.setYear(priortime.get().getYear());
-			timesheet.setWorkingHour(priortime.get().getWorkingHour());
+			timesheet.setTotalWorkingHours(Time.valueOf(priortime.get().getWorkingHour()));
 			timesheet.setStatus("Present");
 			timesheet.setCheckOutLatitude(priortime.get().getCheckOutLatitude());
 			timesheet.setCheckOutLongitude(priortime.get().getCheckOutLongitude());
