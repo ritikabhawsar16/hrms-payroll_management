@@ -1,6 +1,5 @@
 package com.adt.payroll.model;
 
-
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.Proxy;
 
@@ -17,7 +16,7 @@ import lombok.Data;
 @Table(catalog = "EmployeeDB", schema = "user_schema", name = "_EMPLOYEE")
 @Proxy(lazy = false)
 @Data
-public class User{
+public class User {
 
 	@Id
 	@Column(name = "EMPLOYEE_ID")
@@ -36,7 +35,7 @@ public class User{
 	private String password;
 
 	@Column(name = "FIRST_NAME")
-    private String firstName;
+	private String firstName;
 
 	@Column(name = "LAST_NAME")
 	private String lastName;
@@ -53,8 +52,7 @@ public class User{
 	@Column(name = "Gender")
 	private String gender;
 
-	@Column(name = "ADT_ID",nullable = false,unique = true)
+	@Column(name = "ADT_ID", nullable = false, unique = true)
 	private String adtId;
-
 
 }
