@@ -41,7 +41,7 @@ public class EmpPayrollDetails {
 
 	@Column(name = "ifsc_code")
 	private String ifscCode;
-	
+
 	@Column(name = "variable_amount")
 	private Double variable;
 
