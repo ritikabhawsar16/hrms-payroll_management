@@ -1303,7 +1303,7 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 
 			if (compOff != null) {
 
-				compOff.setStatus(AppConstants.COMPOFF);
+				compOff.setStatus(AppConstants.COMPOFF.getStatus());
 				compOffRepository.save(compOff);
 			}
 		}
@@ -1315,14 +1315,14 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 		ExpenseItems expenseItems = expenseItemsOpt.orElseGet(ExpenseItems::new);
 		expenseItems.setEmployee_id(empId);
 		expenseItems.setAmount(amount);
-		expenseItems.setCategory(AppConstants.COMPOFF);
+		expenseItems.setCategory(AppConstants.COMPOFF.getStatus());
 		expenseItems.setComments("CompOff bonus Settlement");
 		expenseItems.setDescription(formattedDate.toString());
 		expenseItems.setGst(false);
 		expenseItems.setPaidBy("Alphadot");
 		expenseItems.setPaymentDate(LocalDate.now());
 		expenseItems.setPaymentMode("Online");
-		expenseItems.setStatus(AppConstants.APPROVED);
+		expenseItems.setStatus(AppConstants.APPROVED.getStatus());
 		expenseManagementRepo.save(expenseItems);
 
 		if (compOff != null) {
@@ -1333,7 +1333,7 @@ public class TimeSheetServiceImpl implements TimeSheetService, PriorTimeService 
 
 	private void handleGoodWill(CompOff compOff) {
 		if (compOff != null) {
-			compOff.setStatus(AppConstants.GOODWILL);
+			compOff.setStatus(AppConstants.GOODWILL.getStatus());
 			compOffRepository.save(compOff);
 		}
 	}

@@ -1,12 +1,29 @@
 package com.adt.payroll.constant;
 
-public class AppConstants {
+
+public enum  AppConstants {
 	
-	public static final String APPROVED = "Approved";
-	public static final String LEAVEINCREMENT = "Leave increment";
-	public static final String BONUS = "bonus";
-	public static final String GOODWILL = "good will";
-	public static final String COMPOFF = "CompOff";
-	
+	APPROVED("Approved"),
+    LEAVEINCREMENT("LeaveIncrement"),
+    BONUS("Bonus"),
+    GOODWILL("GoodWill"),
+    COMPOFF("CompOff"),
+    PENDING("Pending"),
+    SETTLED("Settled");
+
+	private final String status;
+
+	AppConstants(String status) {
+		this.status = status;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	@Override
+	public String toString() {
+		return status;
+	}
 
 }
