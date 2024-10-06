@@ -2,6 +2,7 @@ package com.adt.payroll.service;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @Service
-public class LeaveRequestServiceImpl implements LeaveRequestService {
+public class LeaveRequestServiceImpl implements LeaveRequestService ,LeaveBalanceService{
 	private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
@@ -385,6 +386,47 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 			return empid + " leave request status already updated";
 		}
 	}
+
+	@Override
+	public LeaveBalance saveLeaveBalance(LeaveBalance leaveBalance) {
+		return leaveBalanceRepo.save(leaveBalance);
+	}
+
+    @Override
+	public Optional<LeaveBalance> findByEmpId(Integer empId) {
+		return leaveBalanceRepo.findByEmpId(empId);
+	}
+
+	@Override
+	public List<LeaveBalance> getAllEmployeeLeaves() {
+		return leaveBalanceRepo.findAll();
+	}
+
+	@Override
+	public Optional<LeaveBalance> getLeaveBalanceById(Integer leaveBalanceId) {
+		return leaveBalanceRepo.findByLeaveBalanceId(leaveBalanceId);
+	}
+
+	@Override
+	public Optional<LeaveBalance> updateLeaveBalance(Integer leaveBalanceId, LeaveBalance leaveBalance) {
+		return leaveBalanceRepo.findById(leaveBalanceId).map(existingLeaveBalance -> {
+			existingLeaveBalance.setLeaveBalance(leaveBalance.getLeaveBalance());
+			existingLeaveBalance.setName(leaveBalance.getName());
+			existingLeaveBalance.setEmp_id(leaveBalance.getEmp_id());
+			existingLeaveBalance.setUpdatedWhen(new Timestamp(System.currentTimeMillis()));
+			return leaveBalanceRepo.save(existingLeaveBalance);
+		});
+	}
+
+	@Override
+	public boolean deleteLeaveBalance(Integer leaveBalanceId) {
+		if (leaveBalanceRepo.existsById(leaveBalanceId)) {
+			leaveBalanceRepo.deleteById(leaveBalanceId);
+			return true;
+		}
+		return false;
+	}
+
 }
 
 

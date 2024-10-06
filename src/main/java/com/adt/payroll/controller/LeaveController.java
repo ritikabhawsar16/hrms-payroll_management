@@ -2,14 +2,17 @@
 package com.adt.payroll.controller;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.adt.payroll.model.LeaveBalance;
 import com.adt.payroll.repository.UserRepo;
 import com.adt.payroll.service.EmailService;
+import com.adt.payroll.service.LeaveBalanceService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -40,7 +43,8 @@ import jakarta.mail.MessagingException;
 public class LeaveController {
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
-
+@Autowired
+    LeaveBalanceService leaveBalanceService;
     @Autowired
     public LeaveService leaveService;
 
@@ -213,5 +217,51 @@ public class LeaveController {
         model.put("Message", "Leave request has already been " + status + " by");
         model.put("Email", leaveRequest.getUpdatedBy());
         return new ResponseEntity<>(FreeMarkerTemplateUtils.processTemplateIntoString(template, model), HttpStatus.OK);
+    }
+
+    @PreAuthorize("@auth.allow('SAVE_LEAVE_BALANCE')")
+    @PostMapping("/saveLeaveBalance")
+    public ResponseEntity<LeaveBalance> saveLeaveBalance(@RequestBody LeaveBalance leaveBalance) {
+        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+        leaveBalance.setUpdatedWhen(currentTimestamp);
+        Optional<LeaveBalance> existingLeaveBalanceOpt = leaveBalanceService.findByEmpId(leaveBalance.getEmp_id());
+        if (existingLeaveBalanceOpt.isPresent()) {
+            LeaveBalance existingLeaveBalance = existingLeaveBalanceOpt.get();
+            existingLeaveBalance.setLeaveBalance(leaveBalance.getLeaveBalance());
+            existingLeaveBalance.setName(leaveBalance.getName());
+            existingLeaveBalance.setUpdatedWhen(currentTimestamp);
+            LeaveBalance updatedLeaveBalance = leaveBalanceService.saveLeaveBalance(existingLeaveBalance);
+            return ResponseEntity.ok(updatedLeaveBalance);
+        } else {
+            LeaveBalance savedLeaveBalance = leaveBalanceService.saveLeaveBalance(leaveBalance);
+            return ResponseEntity.status(201).body(savedLeaveBalance);
+        }
+    }
+
+     @PreAuthorize("@auth.allow('GET_ALL_EMPLOYEE_LEAVE_BALANCE')")
+    @GetMapping("/getAllEmployeeLeave")
+    public ResponseEntity<List<LeaveBalance>> getAllEmployeeLeaves() {
+        List<LeaveBalance> leaveBalances = leaveBalanceService.getAllEmployeeLeaves();
+        return ResponseEntity.ok(leaveBalances);
+    }
+    @PreAuthorize("@auth.allow('GET_LEAVE_BALANCE_BY_ID')")
+    @GetMapping("/getLeaveBalanceById/{leaveBalanceId}")
+    public ResponseEntity<LeaveBalance> getLeaveBalanceById(@PathVariable Integer leaveBalanceId) {
+        Optional<LeaveBalance> leaveBalance = leaveBalanceService.getLeaveBalanceById(leaveBalanceId);
+        return leaveBalance.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    @PreAuthorize("@auth.allow('UPDATE_LEAVE_BALANCE_BY_BALANCE_ID')")
+    @PutMapping("/updateLeaveBalance/{leaveBalanceId}")
+    public ResponseEntity<LeaveBalance> updateLeaveBalance(@PathVariable Integer leaveBalanceId, @RequestBody LeaveBalance leaveBalance) {
+        Optional<LeaveBalance> updatedLeaveBalance = leaveBalanceService.updateLeaveBalance(leaveBalanceId, leaveBalance);
+        return updatedLeaveBalance.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+    @PreAuthorize("@auth.allow('DELETE_LEAVE_BALANCE_BY_BALANCE_ID')")
+    @DeleteMapping("/deleteLeaveBalance/{leaveBalanceId}")
+    public ResponseEntity<Void> deleteLeaveBalance(@PathVariable Integer leaveBalanceId) {
+        boolean isDeleted = leaveBalanceService.deleteLeaveBalance(leaveBalanceId);
+        return isDeleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
