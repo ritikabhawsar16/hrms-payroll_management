@@ -1,9 +1,7 @@
 package com.adt.payroll.repository;
 
-import java.lang.StackWalker.Option;
-import java.util.List;
 import java.util.Optional;
-
+import java.time.LocalDate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,5 +14,13 @@ public interface ExpenseManagementRepo extends JpaRepository<ExpenseItems, Integ
 			+ "AND EXTRACT(YEAR FROM payment_date) = :year and status='Approved' ", nativeQuery = true)
 	Optional<ExpenseItems> findExpenseDetailsByEmpId(@Param("empId") Integer empId, @Param("month") Integer month,
 			@Param("year") Integer year);
+
+	@Query(value = "SELECT * FROM expense_schema.expense_management e WHERE e.employee_id = :empId "
+			+ "AND (EXTRACT(MONTH FROM e.payment_date) = :fromDateMonth OR EXTRACT(MONTH FROM e.payment_date) = :toDateMonth) "
+			+ "AND EXTRACT(YEAR FROM e.payment_date) = :year "
+			+ "AND ((LOWER(e.status) = 'approved') OR (LOWER(e.status) = 'settled' AND e.settled_date BETWEEN :fromDate AND :toDate))", nativeQuery = true)
+	Optional<ExpenseItems> findExpenseByEmpId(@Param("empId") Integer empId,
+			@Param("fromDateMonth") Integer fromDateMonth, @Param("toDateMonth") Integer toDateMonth,
+			@Param("year") Integer year, @Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
 
 }

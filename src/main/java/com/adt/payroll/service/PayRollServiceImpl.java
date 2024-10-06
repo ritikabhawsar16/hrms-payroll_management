@@ -1037,12 +1037,27 @@ public class PayRollServiceImpl implements PayRollService {
 									}
 
 									Month month = Month.valueOf(paySlipDetails.get(util.MONTH).toUpperCase());
-									Optional<ExpenseItems> items = expenseManagementRepo.findExpenseDetailsByEmpId(
-											employee.getId(), month.getValue(),
-											Integer.valueOf(paySlipDetails.get(util.YEAR)));
+									int year = Integer.valueOf(paySlipDetails.get(util.YEAR));
+					// Calculate fromDate (16th of previous month) and toDate (11th of currentmonth)
+									LocalDate currentMonthStart = LocalDate.of(year, month, 1);
+									LocalDate fromDate = currentMonthStart.minusMonths(1).withDayOfMonth(16);
+									LocalDate toDate = currentMonthStart.withDayOfMonth(11);
+
+									int fromDateMonth = fromDate.getMonth().getValue();
+									int toDateMonth = toDate.getMonth().getValue();
+
+									Optional<ExpenseItems> items = expenseManagementRepo.findExpenseByEmpId(
+											employee.getId(), fromDateMonth, toDateMonth, year, fromDate, toDate);
+
 									double adhoc = 0;
 									if (items.isPresent()) {
+
 										if (items.get().getStatus().equalsIgnoreCase("Approved")) {
+											adhoc = Double.valueOf(items.get().getAmount());
+											empNetSalaryAmount = Math.round(empNetSalaryAmount + adhoc);
+
+										}
+										if (items.get().getStatus().equalsIgnoreCase("Settled")) {
 											adhoc = Double.valueOf(items.get().getAmount());
 											empNetSalaryAmount = Math.round(empNetSalaryAmount + adhoc);
 										}

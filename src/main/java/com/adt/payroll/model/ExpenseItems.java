@@ -20,47 +20,50 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(catalog = "EmployeeDB", schema = "expense_schema",name="ExpenseManagement")
+@Table(catalog = "EmployeeDB", schema = "expense_schema", name = "ExpenseManagement")
 
 public class ExpenseItems {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(columnDefinition = "serial")
-    private int id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(columnDefinition = "serial")
+	private int id;
 
-    @Column(name="amount")
-    private double amount;
+	@Column(name = "amount")
+	private double amount;
 
-    @Column(name="description")
-    private String description;
+	@Column(name = "description")
+	private String description;
 
-    @Column(name="payment_mode")
-    private String paymentMode;
+	@Column(name = "payment_mode")
+	private String paymentMode;
 
-    @Column(name="payment_date")
-    private LocalDate paymentDate;
+	@Column(name = "payment_date")
+	private LocalDate paymentDate;
 
-    @Column(name="created_by")
-    private String createdBy;
+	@Column(name = "created_by")
+	private String createdBy;
 
-    @Column(name="category")
-    private String category;
+	@Column(name = "category")
+	private String category;
 
-    @Column(name="GST")
-    private boolean gst;
+	@Column(name = "GST")
+	private boolean gst;
 
-    @Column(name="paid_by")
-    private String paidBy;
+	@Column(name = "paid_by")
+	private String paidBy;
 
-    @Column(name="comments")
-    private String comments;
-    
-    @ManyToOne
-    @JoinColumn(name = "employee_id", referencedColumnName = "EMPLOYEE_ID" ,nullable = false, insertable = false, updatable = false)
-    private User employee;
-    private Integer employee_id;
-    
-    @Column(name="status")
-    private String status;
+	@Column(name = "comments")
+	private String comments;
+
+	@ManyToOne
+	@JoinColumn(name = "employee_id", referencedColumnName = "EMPLOYEE_ID", nullable = false, insertable = false, updatable = false)
+	private User employee;
+	private Integer employee_id;
+
+	@Column(name = "status")
+	private String status;
+
+	@Column(name = "settled_date")
+	private LocalDate settledDate;
 }
