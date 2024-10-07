@@ -248,8 +248,10 @@ public class MonthlyScheduler {
 			absentDates.forEach(absentDate -> {
 				try {
 					TimeSheetModel absenceRecord = createAbsenceRecord(employeeId, absentDate, formatter);
-					timeSheetRepo.save(absenceRecord);
-					log.info("Marked absence for employeeId: {} on date: {}", employeeId, absentDate);
+					if(absenceRecord!=null){
+						timeSheetRepo.save(absenceRecord);
+						log.info("Marked absence for employeeId: {} on date: {}", employeeId, absentDate);
+					}
 				} catch (Exception ex) {
 					log.error("Error marking absence for employeeId: {} on date: {}. Exception message: {}", employeeId,
 							absentDate, ex.getMessage(), ex);
@@ -267,8 +269,10 @@ public class MonthlyScheduler {
 						date.format(formatter));
 				if (existingRecords.isEmpty()) {
 					TimeSheetModel absenceRecord = createAbsenceRecord(employeeId, date, formatter);
-					timeSheetRepo.save(absenceRecord);
-					log.info("Marked absence for employeeId: {} on date: {}", employeeId, date);
+					if(absenceRecord!=null){
+						timeSheetRepo.save(absenceRecord);
+						log.info("Marked absence for employeeId: {} on date: {}", employeeId, date);
+					}
 				} else {
 					log.info("Absence record already exists for employeeId: {} on date: {}", employeeId, date);
 				}
@@ -280,6 +284,9 @@ public class MonthlyScheduler {
 	}
 
 	private TimeSheetModel createAbsenceRecord(Integer employeeId, LocalDate date, DateTimeFormatter formatter) {
+		if(timeSheetRepo.findByEmployeeIdAndDate(employeeId, date.format(formatter)).isPresent()){
+			return null;
+		}
 		DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("MMMM");
 		DateTimeFormatter dayFormatter = DateTimeFormatter.ofPattern("EEEE");
 
