@@ -1038,7 +1038,7 @@ public class PayRollServiceImpl implements PayRollService {
 
 									Month month = Month.valueOf(paySlipDetails.get(util.MONTH).toUpperCase());
 									int year = Integer.valueOf(paySlipDetails.get(util.YEAR));
-					// Calculate fromDate (16th of previous month) and toDate (11th of currentmonth)
+									// Calculate fromDate (16th of previous month) and toDate (11th of currentmonth)
 									LocalDate currentMonthStart = LocalDate.of(year, month, 1);
 									LocalDate fromDate = currentMonthStart.minusMonths(1).withDayOfMonth(16);
 									LocalDate toDate = currentMonthStart.withDayOfMonth(11);
@@ -1046,20 +1046,24 @@ public class PayRollServiceImpl implements PayRollService {
 									int fromDateMonth = fromDate.getMonth().getValue();
 									int toDateMonth = toDate.getMonth().getValue();
 
-									Optional<ExpenseItems> items = expenseManagementRepo.findExpenseByEmpId(
-											employee.getId(), fromDateMonth, toDateMonth, year, fromDate, toDate);
+									Optional<List<ExpenseItems>> expenseItemsListOpt = expenseManagementRepo
+											.findExpenseByEmpId(employee.getId(), fromDateMonth, toDateMonth, year,
+													fromDate, toDate);
 
-									double adhoc = 0;
-									if (items.isPresent()) {
+									double adhocTotal = 0;
 
-										if (items.get().getStatus().equalsIgnoreCase("Approved")) {
-											adhoc = Double.valueOf(items.get().getAmount());
-											empNetSalaryAmount = Math.round(empNetSalaryAmount + adhoc);
+									if (expenseItemsListOpt.isPresent()) {
+										List<ExpenseItems> expenseItemsList = expenseItemsListOpt.get();
 
-										}
-										if (items.get().getStatus().equalsIgnoreCase("Settled")) {
-											adhoc = Double.valueOf(items.get().getAmount());
-											empNetSalaryAmount = Math.round(empNetSalaryAmount + adhoc);
+										for (ExpenseItems expenseItem : expenseItemsList) {
+											String status = expenseItem.getStatus().toLowerCase();
+											double expenseAmount = expenseItem.getAmount();
+
+											if (status.equalsIgnoreCase("approved")
+													|| status.equalsIgnoreCase("settled")) {
+												adhocTotal += expenseAmount;
+												empNetSalaryAmount = Math.round(empNetSalaryAmount + expenseAmount);
+											}
 										}
 									}
 
@@ -1072,7 +1076,7 @@ public class PayRollServiceImpl implements PayRollService {
 									paySlip.setPayPeriods(paySlipDetails.get(Util.PAY_PERIOD));
 									paySlip.setNetSalaryAmount(empNetSalaryAmount);
 									paySlip.setSalary(empGrossSalaryAmount);
-									paySlip.setAdhoc(adhoc);
+									paySlip.setAdhoc(adhocTotal);
 									paySlip.setGrossDeduction(grossDeduction);
 									// paySlip.setAdjustment(adjustment);
 
