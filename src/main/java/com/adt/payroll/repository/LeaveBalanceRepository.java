@@ -22,6 +22,7 @@ public interface LeaveBalanceRepository extends JpaRepository<LeaveBalance, Inte
 
 	@Query(value = "select * from payroll_schema.leave_balance where leave_bal_id=?1", nativeQuery = true)
 	Optional<LeaveBalance> findByLeaveBalanceId(Integer leaveBalanceId);
+
 	Optional<LeaveBalance> findByEmployeeId(Integer empId);
 
 //	LeaveBalance findByEmpId(int id);

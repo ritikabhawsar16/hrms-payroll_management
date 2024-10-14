@@ -1408,7 +1408,9 @@ public class PayRollServiceImpl implements PayRollService {
 //		if (absentDeductionAmt < dto.getAbsentDeduction())
 //			return new ResponseEntity<>(Util.ABSENT_DEDUCTION + Util.PAYSLIP_VALIDATION_MSG + absentDeductionAmt,
 //					HttpStatus.OK);
-		double grossDeduction = dto.getEmployeeEsic() + dto.getEmployeePf() + absentDeductionAmt + dto.getAjdustment();
+		double grossDeduction = Math.round(dto.getEmployeeEsic() + dto.getEmployeePf() + absentDeductionAmt
+				+ dto.getAjdustment() + dto.getMedicalAmount());
+
 		double netSalary = Math.round(salaryDetails.getGrossSalary() - grossDeduction);
 		if (netSalary < 0) {
 			netSalary = 0;
